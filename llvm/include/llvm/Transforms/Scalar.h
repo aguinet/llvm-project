@@ -523,6 +523,8 @@ Pass *createLoopSimplifyCFGPass();
 // transformations.
 //
 Pass *createWarnMissedTransformationsPass();
+
+FunctionPass* createAffineExprCombinePass();
 } // End llvm namespace
 
 #endif

@@ -120,6 +120,7 @@ private:
   /// \param SclTy scalar version of new type to reduce expression dag into.
   void ReduceExpressionDag(Type *SclTy);
 };
+
 } // end namespace llvm.
 
 #endif

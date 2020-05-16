@@ -1,7 +1,9 @@
 add_llvm_component_library(LLVMScalarOpts
   ADCE.cpp
+  AffineExprCombine.cpp
   AlignmentFromAssumptions.cpp
   BDCE.cpp
+  BitMatrix.cpp
   CallSiteSplitting.cpp
   ConstantHoisting.cpp
   ConstantProp.cpp
