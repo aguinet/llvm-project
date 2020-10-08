@@ -4079,6 +4079,11 @@ CCAssignFn *AArch64TargetLowering::CCAssignFnForCall(CallingConv::ID CC,
    case CallingConv::AArch64_VectorCall:
    case CallingConv::AArch64_SVE_VectorCall:
      return CC_AArch64_AAPCS;
+   case CallingConv::AArch64Darwin:
+     if (!IsVarArg)
+       return CC_AArch64_DarwinPCS;
+     return Subtarget->isTargetILP32() ? CC_AArch64_DarwinPCS_ILP32_VarArg
+                                       : CC_AArch64_DarwinPCS_VarArg;
   }
 }
 
@@ -4094,7 +4099,9 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
-  bool IsWin64 = Subtarget->isCallingConvWin64(MF.getFunction().getCallingConv());
+  const auto FCC = MF.getFunction().getCallingConv();
+  const bool IsWin64 = Subtarget->isCallingConvWin64(FCC);
+  const bool IsDarwin = Subtarget->isCallingConvDarwin(FCC);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -4278,7 +4285,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
   // varargs
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
   if (isVarArg) {
-    if (!Subtarget->isTargetDarwin() || IsWin64) {
+    if (!IsDarwin || IsWin64) {
       // The AAPCS variadic function ABI is identical to the non-variadic
       // one. As a result there may be more arguments in registers and we should
       // save them for future reference.
@@ -6429,6 +6436,62 @@ SDValue AArch64TargetLowering::LowerBlockAddress(SDValue Op,
   return getAddr(BA, DAG);
 }
 
+SDValue
+AArch64TargetLowering::LowerAAPCSFromDarwin_VASTART(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+  // Linux/AArch64 va_list structure is (AArch64 Procedure Call Standard,
+  // section B.3.):
+  // typedef struct {
+  //  void *stack;
+  //  void *gr_top;
+  //  void *vr_top;
+  //  int gr_offs;
+  //  int vr_offs;
+  // } va_list;
+  // Darwin/AArch64 va_list is just a pointer to the stack, as all variadic
+  // arguments are pushed to the stack.
+  // So we basically set stack as LowerDarwin_VASTART would do, and then set
+  // the gr_offs & vr_offs fields to zero. This will enforce AAPCS functions
+  // processing va_list objects to only get objects from the stack.
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
+  auto PtrVT = getPointerTy(DAG.getDataLayout());
+  SDLoc DL(Op);
+
+  SDValue Chain = Op.getOperand(0);
+  SDValue VAList = Op.getOperand(1);
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  SmallVector<SDValue, 4> MemOps;
+
+  // void *__stack at offset 0
+  SDValue Stack = DAG.getFrameIndex(FuncInfo->getVarArgsStackIndex(), PtrVT);
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, Stack, VAList, MachinePointerInfo(SV), Align(8)));
+
+  // void *__gr_top at offset 8. Won't be used.
+  const int GPRSize = 0;
+
+  // void *__vr_top at offset 16. Won't be used.
+  const int FPRSize = 0;
+
+  // int __gr_offs at offset 24
+  SDValue GROffsAddr =
+      DAG.getNode(ISD::ADD, DL, PtrVT, VAList, DAG.getConstant(24, DL, PtrVT));
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, DAG.getConstant(-GPRSize, DL, MVT::i32),
+                   GROffsAddr, MachinePointerInfo(SV, 24), Align(4)));
+
+  // int __vr_offs at offset 28
+  SDValue VROffsAddr =
+      DAG.getNode(ISD::ADD, DL, PtrVT, VAList, DAG.getConstant(28, DL, PtrVT));
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, DAG.getConstant(-FPRSize, DL, MVT::i32),
+                   VROffsAddr, MachinePointerInfo(SV, 28), Align(4)));
+
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
+}
+
 SDValue AArch64TargetLowering::LowerDarwin_VASTART(SDValue Op,
                                                  SelectionDAG &DAG) const {
   AArch64FunctionInfo *FuncInfo =
@@ -6529,11 +6592,19 @@ SDValue AArch64TargetLowering::LowerVASTART(SDValue Op,
                                             SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
 
-  if (Subtarget->isCallingConvWin64(MF.getFunction().getCallingConv()))
+  const auto FCC = MF.getFunction().getCallingConv();
+  if (Subtarget->isCallingConvWin64(FCC))
     return LowerWin64_VASTART(Op, DAG);
-  else if (Subtarget->isTargetDarwin())
-    return LowerDarwin_VASTART(Op, DAG);
-  else
+  else if (Subtarget->isCallingConvDarwin(FCC)) {
+    if (Subtarget->isTargetDarwin()) {
+      return LowerDarwin_VASTART(Op, DAG);
+    }
+    if (!Subtarget->isTargetWindows()) {
+      return LowerAAPCSFromDarwin_VASTART(Op, DAG);
+    }
+    report_fatal_error("can't lower Darwin vaarg if target OS isn't Darwin or "
+                       "has an official AAPCS ABI (e.g. Linux)");
+  } else
     return LowerAAPCS_VASTART(Op, DAG);
 }
 

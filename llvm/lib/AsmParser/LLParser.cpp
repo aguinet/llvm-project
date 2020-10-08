@@ -2014,6 +2014,7 @@ void LLParser::ParseOptionalDLLStorageClass(unsigned &Res) {
 ///   ::= 'spir_kernel'
 ///   ::= 'x86_64_sysvcc'
 ///   ::= 'win64cc'
+///   ::= 'aarch64_darwincc'
 ///   ::= 'webkit_jscc'
 ///   ::= 'anyregcc'
 ///   ::= 'preserve_mostcc'
@@ -2054,35 +2055,36 @@ bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
   case lltok::kw_aarch64_sve_vector_pcs:
     CC = CallingConv::AArch64_SVE_VectorCall;
     break;
-  case lltok::kw_msp430_intrcc:  CC = CallingConv::MSP430_INTR; break;
-  case lltok::kw_avr_intrcc:     CC = CallingConv::AVR_INTR; break;
-  case lltok::kw_avr_signalcc:   CC = CallingConv::AVR_SIGNAL; break;
-  case lltok::kw_ptx_kernel:     CC = CallingConv::PTX_Kernel; break;
-  case lltok::kw_ptx_device:     CC = CallingConv::PTX_Device; break;
-  case lltok::kw_spir_kernel:    CC = CallingConv::SPIR_KERNEL; break;
-  case lltok::kw_spir_func:      CC = CallingConv::SPIR_FUNC; break;
-  case lltok::kw_intel_ocl_bicc: CC = CallingConv::Intel_OCL_BI; break;
-  case lltok::kw_x86_64_sysvcc:  CC = CallingConv::X86_64_SysV; break;
-  case lltok::kw_win64cc:        CC = CallingConv::Win64; break;
-  case lltok::kw_webkit_jscc:    CC = CallingConv::WebKit_JS; break;
-  case lltok::kw_anyregcc:       CC = CallingConv::AnyReg; break;
-  case lltok::kw_preserve_mostcc:CC = CallingConv::PreserveMost; break;
-  case lltok::kw_preserve_allcc: CC = CallingConv::PreserveAll; break;
-  case lltok::kw_ghccc:          CC = CallingConv::GHC; break;
-  case lltok::kw_swiftcc:        CC = CallingConv::Swift; break;
-  case lltok::kw_x86_intrcc:     CC = CallingConv::X86_INTR; break;
-  case lltok::kw_hhvmcc:         CC = CallingConv::HHVM; break;
-  case lltok::kw_hhvm_ccc:       CC = CallingConv::HHVM_C; break;
-  case lltok::kw_cxx_fast_tlscc: CC = CallingConv::CXX_FAST_TLS; break;
-  case lltok::kw_amdgpu_vs:      CC = CallingConv::AMDGPU_VS; break;
-  case lltok::kw_amdgpu_ls:      CC = CallingConv::AMDGPU_LS; break;
-  case lltok::kw_amdgpu_hs:      CC = CallingConv::AMDGPU_HS; break;
-  case lltok::kw_amdgpu_es:      CC = CallingConv::AMDGPU_ES; break;
-  case lltok::kw_amdgpu_gs:      CC = CallingConv::AMDGPU_GS; break;
-  case lltok::kw_amdgpu_ps:      CC = CallingConv::AMDGPU_PS; break;
-  case lltok::kw_amdgpu_cs:      CC = CallingConv::AMDGPU_CS; break;
-  case lltok::kw_amdgpu_kernel:  CC = CallingConv::AMDGPU_KERNEL; break;
-  case lltok::kw_tailcc:         CC = CallingConv::Tail; break;
+  case lltok::kw_msp430_intrcc:    CC = CallingConv::MSP430_INTR; break;
+  case lltok::kw_avr_intrcc:       CC = CallingConv::AVR_INTR; break;
+  case lltok::kw_avr_signalcc:     CC = CallingConv::AVR_SIGNAL; break;
+  case lltok::kw_ptx_kernel:       CC = CallingConv::PTX_Kernel; break;
+  case lltok::kw_ptx_device:       CC = CallingConv::PTX_Device; break;
+  case lltok::kw_spir_kernel:      CC = CallingConv::SPIR_KERNEL; break;
+  case lltok::kw_spir_func:        CC = CallingConv::SPIR_FUNC; break;
+  case lltok::kw_intel_ocl_bicc:   CC = CallingConv::Intel_OCL_BI; break;
+  case lltok::kw_x86_64_sysvcc:    CC = CallingConv::X86_64_SysV; break;
+  case lltok::kw_win64cc:          CC = CallingConv::Win64; break;
+  case lltok::kw_aarch64_darwincc: CC = CallingConv::AArch64Darwin; break;
+  case lltok::kw_webkit_jscc:      CC = CallingConv::WebKit_JS; break;
+  case lltok::kw_anyregcc:         CC = CallingConv::AnyReg; break;
+  case lltok::kw_preserve_mostcc:  CC = CallingConv::PreserveMost; break;
+  case lltok::kw_preserve_allcc:   CC = CallingConv::PreserveAll; break;
+  case lltok::kw_ghccc:            CC = CallingConv::GHC; break;
+  case lltok::kw_swiftcc:          CC = CallingConv::Swift; break;
+  case lltok::kw_x86_intrcc:       CC = CallingConv::X86_INTR; break;
+  case lltok::kw_hhvmcc:           CC = CallingConv::HHVM; break;
+  case lltok::kw_hhvm_ccc:         CC = CallingConv::HHVM_C; break;
+  case lltok::kw_cxx_fast_tlscc:   CC = CallingConv::CXX_FAST_TLS; break;
+  case lltok::kw_amdgpu_vs:        CC = CallingConv::AMDGPU_VS; break;
+  case lltok::kw_amdgpu_ls:        CC = CallingConv::AMDGPU_LS; break;
+  case lltok::kw_amdgpu_hs:        CC = CallingConv::AMDGPU_HS; break;
+  case lltok::kw_amdgpu_es:        CC = CallingConv::AMDGPU_ES; break;
+  case lltok::kw_amdgpu_gs:        CC = CallingConv::AMDGPU_GS; break;
+  case lltok::kw_amdgpu_ps:        CC = CallingConv::AMDGPU_PS; break;
+  case lltok::kw_amdgpu_cs:        CC = CallingConv::AMDGPU_CS; break;
+  case lltok::kw_amdgpu_kernel:    CC = CallingConv::AMDGPU_KERNEL; break;
+  case lltok::kw_tailcc:           CC = CallingConv::Tail; break;
   case lltok::kw_cc: {
       Lex.Lex();
       return ParseUInt32(CC);

@@ -2,26 +2,7 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-windows-msvc -o - -emit-llvm -debug-info-kind=limited %s | FileCheck %s --check-prefix=WINDOWS
 // RUN: %clang_cc1 -triple i386-pc-linux-gnu -o - -emit-llvm -debug-info-kind=limited %s | FileCheck %s --check-prefix=LINUX32
 // RUN: %clang_cc1 -triple armv7--linux-gnueabihf -o - -emit-llvm -debug-info-kind=limited %s | FileCheck %s --check-prefix=ARM
-
-//  enum CallingConv {
-//    CC_C,           // __attribute__((cdecl))
-//    CC_X86StdCall,  // __attribute__((stdcall))
-//    CC_X86FastCall, // __attribute__((fastcall))
-//    CC_X86ThisCall, // __attribute__((thiscall))
-//    CC_X86VectorCall, // __attribute__((vectorcall))
-//    CC_X86Pascal,   // __attribute__((pascal))
-//    CC_Win64,       // __attribute__((ms_abi))
-//    CC_X86_64SysV,  // __attribute__((sysv_abi))
-//    CC_X86RegCall, // __attribute__((regcall))
-//    CC_AAPCS,       // __attribute__((pcs("aapcs")))
-//    CC_AAPCS_VFP,   // __attribute__((pcs("aapcs-vfp")))
-//    CC_IntelOclBicc, // __attribute__((intel_ocl_bicc))
-//    CC_SpirFunction, // default for OpenCL functions on SPIR target
-//    CC_OpenCLKernel, // inferred for OpenCL kernels
-//    CC_Swift,        // __attribute__((swiftcall))
-//    CC_PreserveMost, // __attribute__((preserve_most))
-//    CC_PreserveAll,  // __attribute__((preserve_all))
-//  };
+// RUN: %clang_cc1 -triple aarch64-pc-linux -o - -emit-llvm -debug-info-kind=limited %s | FileCheck %s --check-prefix=AARCH64
 
 #ifdef __x86_64__
 
@@ -116,5 +97,13 @@ __attribute__((pcs("aapcs"))) int add_aapcs(int a, int b) {
 // ARM: ![[FTY]] = !DISubroutineType({{.*}}cc: DW_CC_LLVM_AAPCS_VFP,
 __attribute__((pcs("aapcs-vfp"))) int add_aapcs_vfp(int a, int b) {
   return a+b;
+}
+#endif
+
+#if defined(__aarch64__) && defined(__linux__)
+// AARCH64: !DISubprogram({{.*}}"add_darwinabi", {{.*}}type: ![[FTY:[0-9]+]]
+// AARCH64: ![[FTY]] = !DISubroutineType({{.*}}cc: DW_CC_LLVM_AArch64Darwin,
+__attribute__((darwin_abi)) int add_darwinabi(int a, int b) {
+  return a + b;
 }
 #endif

@@ -1477,6 +1477,12 @@ def MSABI : DeclOrTypeAttr {
   let Documentation = [MSABIDocs];
 }
 
+def DarwinABI : DeclOrTypeAttr {
+  let Spellings = [GCC<"darwin_abi">];
+//  let Subjects = [Function, ObjCMethod];
+  let Documentation = [DarwinABIDocs];
+}
+
 def MSP430Interrupt : InheritableAttr, TargetSpecificAttr<TargetMSP430> {
   // NOTE: If you add any additional spellings, ARMInterrupt's, MipsInterrupt's
   // and AnyX86Interrupt's spellings must match.

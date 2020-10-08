@@ -65,6 +65,20 @@ public:
     UseARMGuardVarABI(UseARMGuardVarABI),
     Use32BitVTableOffsetABI(false) { }
 
+  bool HasThisReturn(GlobalDecl GD) const override {
+    // Returns true if AArch64 Darwin ABI is explicitly used.
+    const bool IsCtorOrDtor = (isa<CXXConstructorDecl>(GD.getDecl()) ||
+                               (isa<CXXDestructorDecl>(GD.getDecl()) &&
+                                GD.getDtorType() != Dtor_Deleting));
+    if (!IsCtorOrDtor) {
+      return false;
+    }
+    auto *FTy =
+        cast<FunctionDecl>(GD.getDecl())->getType()->getAs<FunctionType>();
+    const auto FCC = FTy->getCallConv();
+    return FCC == CallingConv::CC_AArch64Darwin;
+  }
+
   bool classifyReturnType(CGFunctionInfo &FI) const override;
 
   RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const override {

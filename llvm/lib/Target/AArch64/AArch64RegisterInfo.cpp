@@ -74,7 +74,6 @@ bool AArch64RegisterInfo::hasSVEArgsOrReturn(const MachineFunction *MF) {
 const MCPhysReg *
 AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   assert(MF && "Invalid MachineFunction pointer.");
-
   if (MF->getFunction().getCallingConv() == CallingConv::GHC)
     // GHC set of callee saved regs is empty as all those regs are
     // used for passing STG regs around
@@ -87,22 +86,26 @@ AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   if (MF->getSubtarget<AArch64Subtarget>().isTargetDarwin())
     return getDarwinCalleeSavedRegs(MF);
 
-  if (MF->getFunction().getCallingConv() == CallingConv::CFGuard_Check)
+  const auto FCC = MF->getFunction().getCallingConv();
+  if (FCC == CallingConv::AArch64Darwin) {
+    return CSR_Darwin_AArch64_AAPCS_SaveList;
+  }
+  if (FCC == CallingConv::CFGuard_Check)
     return CSR_Win_AArch64_CFGuard_Check_SaveList;
   if (MF->getSubtarget<AArch64Subtarget>().isTargetWindows())
     return CSR_Win_AArch64_AAPCS_SaveList;
-  if (MF->getFunction().getCallingConv() == CallingConv::AArch64_VectorCall)
+  if (FCC == CallingConv::AArch64_VectorCall)
     return CSR_AArch64_AAVPCS_SaveList;
-  if (MF->getFunction().getCallingConv() == CallingConv::AArch64_SVE_VectorCall)
+  if (FCC == CallingConv::AArch64_SVE_VectorCall)
     return CSR_AArch64_SVE_AAPCS_SaveList;
   if (MF->getSubtarget<AArch64Subtarget>().getTargetLowering()
           ->supportSwiftError() &&
       MF->getFunction().getAttributes().hasAttrSomewhere(
           Attribute::SwiftError))
     return CSR_AArch64_AAPCS_SwiftError_SaveList;
-  if (MF->getFunction().getCallingConv() == CallingConv::PreserveMost)
+  if (FCC == CallingConv::PreserveMost)
     return CSR_AArch64_RT_MostRegs_SaveList;
-  if (MF->getFunction().getCallingConv() == CallingConv::Win64)
+  if (FCC == CallingConv::Win64)
     // This is for OSes other than Windows; Windows is a separate case further
     // above.
     return CSR_AArch64_AAPCS_X18_SaveList;
@@ -221,6 +224,9 @@ AArch64RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
     return getDarwinCallPreservedMask(MF, CC);
   }
 
+  if (CC == CallingConv::AArch64Darwin) {
+    return CSR_Darwin_AArch64_AAPCS_RegMask;
+  }
   if (CC == CallingConv::AArch64_VectorCall)
     return SCS ? CSR_AArch64_AAVPCS_SCS_RegMask : CSR_AArch64_AAVPCS_RegMask;
   if (CC == CallingConv::AArch64_SVE_VectorCall)
@@ -291,7 +297,7 @@ AArch64RegisterInfo::getThisReturnPreservedMask(const MachineFunction &MF,
   // In case that the calling convention does not use the same register for
   // both, the function should return NULL (does not currently apply)
   assert(CC != CallingConv::GHC && "should not be GHC calling convention.");
-  if (MF.getSubtarget<AArch64Subtarget>().isTargetDarwin())
+  if (MF.getSubtarget<AArch64Subtarget>().isCallingConvDarwin(CC))
     return CSR_Darwin_AArch64_AAPCS_ThisReturn_RegMask;
   return CSR_AArch64_AAPCS_ThisReturn_RegMask;
 }

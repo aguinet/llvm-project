@@ -5612,6 +5612,7 @@ static bool checkVAStartABI(Sema &S, unsigned BuiltinID, Expr *Fn) {
   bool IsAArch64 = (TT.getArch() == llvm::Triple::aarch64 ||
                     TT.getArch() == llvm::Triple::aarch64_32);
   bool IsWindows = TT.isOSWindows();
+  bool IsLinux = TT.isOSLinux();
   bool IsMSVAStart = BuiltinID == Builtin::BI__builtin_ms_va_start;
   if (IsX64 || IsAArch64) {
     CallingConv CC = CC_C;
@@ -5627,8 +5628,10 @@ static bool checkVAStartABI(Sema &S, unsigned BuiltinID, Expr *Fn) {
       // On x64 Windows, don't allow this in System V ABI functions.
       // (Yes, that means there's no corresponding way to support variadic
       // System V ABI functions on Windows.)
+      // On Apple ARM64 ABI functions, only allow this on AArch64/Unix.
       if ((IsWindows && CC == CC_X86_64SysV) ||
-          (!IsWindows && CC == CC_Win64))
+          (!IsWindows && CC == CC_Win64) ||
+          (!IsLinux && CC == CC_AArch64Darwin))
         return S.Diag(Fn->getBeginLoc(),
                       diag::err_va_start_used_in_wrong_abi_function)
                << !IsWindows;

@@ -2252,6 +2252,15 @@ attribute has no effect on Windows targets or non-x86_64 targets.
   }];
 }
 
+def DarwinABIDocs : Documentation {
+  let Category = DocCatCallingConvs;
+  let Content = [{
+On Linux ARM64 targets, this attribute changes the calling convention of
+a function to match the default convention used on Apple ARM64. This
+attribute has no effect on Apple targets or non-Linux ARM64 targets.
+  }];
+}
+
 def StdCallDocs : Documentation {
   let Category = DocCatCallingConvs;
   let Content = [{

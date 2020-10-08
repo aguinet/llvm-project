@@ -2900,6 +2900,8 @@ StringRef CXXNameMangler::getCallingConvQualifierName(CallingConv CC) {
     return "sysv_abi";
   case CC_Win64:
     return "ms_abi";
+  case CC_AArch64Darwin:
+    return "darwin_abi";
   case CC_Swift:
     return "swiftcall";
   }

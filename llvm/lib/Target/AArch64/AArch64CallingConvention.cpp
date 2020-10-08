@@ -145,7 +145,9 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   for (auto Reg : RegList)
     State.AllocateReg(Reg);
 
-  const Align SlotAlign = Subtarget.isTargetDarwin() ? Align(1) : Align(8);
+  const auto FCC = State.getMachineFunction().getFunction().getCallingConv();
+  const Align SlotAlign =
+      Subtarget.isCallingConvDarwin(FCC) ? Align(1) : Align(8);
 
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, SlotAlign);
 }

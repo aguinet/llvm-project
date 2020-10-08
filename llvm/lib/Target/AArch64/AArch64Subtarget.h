@@ -549,6 +549,13 @@ public:
     }
   }
 
+  bool isCallingConvDarwin(CallingConv::ID CC) const {
+    if (CC == CallingConv::AArch64Darwin) {
+      return true;
+    }
+    return isTargetDarwin();
+  }
+
   void mirFileLoaded(MachineFunction &MF) const override;
 
   // Return the known range for the bit length of SVE data registers. A value

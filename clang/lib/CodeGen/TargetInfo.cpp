@@ -5446,9 +5446,16 @@ public:
 private:
   ABIKind getABIKind() const { return Kind; }
   bool isDarwinPCS() const { return Kind == DarwinPCS; }
+  bool isDarwinPCS(const unsigned CConv) const {
+    return isDarwinPCS() || CConv == llvm::CallingConv::AArch64Darwin;
+  }
+  bool isDarwinPCS(CGFunctionInfo const &FI) const {
+    return isDarwinPCS(FI.getCallingConvention());
+  }
 
-  ABIArgInfo classifyReturnType(QualType RetTy, bool IsVariadic) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, bool IsVariadic,
+                                unsigned CConv) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned CConv) const;
   ABIArgInfo coerceIllegalVector(QualType Ty) const;
   bool isHomogeneousAggregateBaseType(QualType Ty) const override;
   bool isHomogeneousAggregateSmallEnough(const Type *Ty,
@@ -5457,12 +5464,13 @@ private:
   bool isIllegalVectorType(QualType Ty) const;
 
   void computeInfo(CGFunctionInfo &FI) const override {
+    const unsigned CConv = FI.getCallingConvention();
     if (!::classifyReturnType(getCXXABI(), FI, *this))
       FI.getReturnInfo() =
-          classifyReturnType(FI.getReturnType(), FI.isVariadic());
+          classifyReturnType(FI.getReturnType(), FI.isVariadic(), CConv);
 
     for (auto &it : FI.arguments())
-      it.info = classifyArgumentType(it.type);
+      it.info = classifyArgumentType(it.type, CConv);
   }
 
   Address EmitDarwinVAArg(Address VAListAddr, QualType Ty,
@@ -5660,7 +5668,8 @@ ABIArgInfo AArch64ABIInfo::coerceIllegalVector(QualType Ty) const {
   return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
 }
 
-ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
+ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty,
+                                                unsigned CConv) const {
   Ty = useFirstFieldIfTransparentUnion(Ty);
 
   // Handle illegal vector types here.
@@ -5676,7 +5685,7 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
       if (EIT->getNumBits() > 128)
         return getNaturalAlignIndirect(Ty);
 
-    return (isPromotableIntegerTypeForABI(Ty) && isDarwinPCS()
+    return (isPromotableIntegerTypeForABI(Ty) && isDarwinPCS(CConv)
                 ? ABIArgInfo::getExtend(Ty)
                 : ABIArgInfo::getDirect());
   }
@@ -5693,7 +5702,7 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
   uint64_t Size = getContext().getTypeSize(Ty);
   bool IsEmpty = isEmptyRecord(getContext(), Ty, true);
   if (IsEmpty || Size == 0) {
-    if (!getContext().getLangOpts().CPlusPlus || isDarwinPCS())
+    if (!getContext().getLangOpts().CPlusPlus || isDarwinPCS(CConv))
       return ABIArgInfo::getIgnore();
 
     // GNU C mode. The only argument that gets ignored is an empty one with size
@@ -5739,8 +5748,8 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
   return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
 }
 
-ABIArgInfo AArch64ABIInfo::classifyReturnType(QualType RetTy,
-                                              bool IsVariadic) const {
+ABIArgInfo AArch64ABIInfo::classifyReturnType(QualType RetTy, bool IsVariadic,
+                                              unsigned CConv) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -5763,7 +5772,7 @@ ABIArgInfo AArch64ABIInfo::classifyReturnType(QualType RetTy,
       if (EIT->getNumBits() > 128)
         return getNaturalAlignIndirect(RetTy);
 
-    return (isPromotableIntegerTypeForABI(RetTy) && isDarwinPCS()
+    return (isPromotableIntegerTypeForABI(RetTy) && isDarwinPCS(CConv)
                 ? ABIArgInfo::getExtend(RetTy)
                 : ABIArgInfo::getDirect());
   }
@@ -5866,7 +5875,7 @@ bool AArch64ABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
 Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr,
                                             QualType Ty,
                                             CodeGenFunction &CGF) const {
-  ABIArgInfo AI = classifyArgumentType(Ty);
+  ABIArgInfo AI = classifyArgumentType(Ty, llvm::CallingConv::C);
   bool IsIndirect = AI.isIndirect();
 
   llvm::Type *BaseTy = CGF.ConvertType(Ty);
