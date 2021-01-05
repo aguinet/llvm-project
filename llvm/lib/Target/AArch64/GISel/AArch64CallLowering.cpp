@@ -474,8 +474,8 @@ bool AArch64CallLowering::lowerFormalArguments(
   uint64_t StackOffset = Handler.StackUsed;
   if (F.isVarArg()) {
     auto &Subtarget = MF.getSubtarget<AArch64Subtarget>();
-    if (!Subtarget.isTargetDarwin()) {
-        // FIXME: we need to reimplement saveVarArgsRegisters from
+    if (!Subtarget.isCallingConvDarwin(MF.getFunction().getCallingConv())) {
+      // FIXME: we need to reimplement saveVarArgsRegisters from
       // AArch64ISelLowering.
       return false;
     }

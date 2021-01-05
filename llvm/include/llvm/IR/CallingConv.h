@@ -244,6 +244,9 @@ namespace CallingConv {
     /// Calling convention used for AMD graphics targets.
     AMDGPU_Gfx = 100,
 
+    /// The C convention as implemented on Darwin/AArch64.
+    AArch64Darwin = 101,
+
     /// The highest possible calling convention ID. Must be some 2^k - 1.
     MaxID = 1023
   };

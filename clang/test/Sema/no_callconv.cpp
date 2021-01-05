@@ -9,6 +9,7 @@ void __regcall func_rc() {} // expected-error {{'__regcall' calling convention i
 void __attribute__((vectorcall)) funcA() {} // expected-error {{'vectorcall' calling convention is not supported for this target}}
 void __attribute__((regcall)) funcB() {} // expected-error {{'regcall' calling convention is not supported for this target}}
 void __attribute__((ms_abi)) funcH() {} // expected-error {{'ms_abi' calling convention is not supported for this target}}
+void __attribute__((darwin_abi)) funcDW() {}    // expected-error {{'darwin_abi' calling convention is not supported for this target}}
 void __attribute__((intel_ocl_bicc)) funcJ() {} // expected-error {{'intel_ocl_bicc' calling convention is not supported for this target}}
 void __attribute__((swiftcall)) funcK() {} // expected-error {{'swiftcall' calling convention is not supported for this target}}
 void __attribute__((pascal)) funcG() {} // expected-error {{'pascal' calling convention is not supported for this target}}
@@ -38,6 +39,8 @@ void __attribute__((pascal)) funcG() {} // expected-warning {{'pascal' calling c
 void __attribute__((stdcall)) funcD() {} // expected-warning {{'stdcall' calling convention is not supported for this target}}
 void __attribute__((fastcall)) funcE() {} // expected-warning {{'fastcall' calling convention is not supported for this target}}
 void __attribute__((thiscall)) funcF() {} // expected-warning {{'thiscall' calling convention is not supported for this target}}
+// darwin_abi is only supported for ARM64/Linux targets
+void __attribute__((darwin_abi)) funcDW() {} // expected-warning {{'darwin_abi' calling convention is not supported for this target}}
 #endif
 
 void __attribute__((sysv_abi)) funcI() {}

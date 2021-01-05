@@ -51,6 +51,7 @@ unsigned CodeGenTypes::ClangCallConvToLLVMCallConv(CallingConv CC) {
   case CC_X86FastCall: return llvm::CallingConv::X86_FastCall;
   case CC_X86RegCall: return llvm::CallingConv::X86_RegCall;
   case CC_X86ThisCall: return llvm::CallingConv::X86_ThisCall;
+  case CC_AArch64Darwin: return llvm::CallingConv::AArch64Darwin;
   case CC_Win64: return llvm::CallingConv::Win64;
   case CC_X86_64SysV: return llvm::CallingConv::X86_64_SysV;
   case CC_AAPCS: return llvm::CallingConv::ARM_AAPCS;
@@ -200,7 +201,7 @@ CodeGenTypes::arrangeFreeFunctionType(CanQual<FunctionProtoType> FTP) {
 }
 
 static CallingConv getCallingConventionForDecl(const ObjCMethodDecl *D,
-                                               bool IsWindows) {
+                                               bool IsWindows, bool IsDarwin) {
   // Set the appropriate calling convention for the Function.
   if (D->hasAttr<StdCallAttr>())
     return CC_X86StdCall;
@@ -231,6 +232,9 @@ static CallingConv getCallingConventionForDecl(const ObjCMethodDecl *D,
 
   if (D->hasAttr<MSABIAttr>())
     return IsWindows ? CC_C : CC_Win64;
+
+  if (D->hasAttr<DarwinABIAttr>())
+    return IsDarwin ? CC_C : CC_AArch64Darwin;
 
   if (D->hasAttr<SysVABIAttr>())
     return IsWindows ? CC_X86_64SysV : CC_C;
@@ -487,7 +491,9 @@ CodeGenTypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
 
   FunctionType::ExtInfo einfo;
   bool IsWindows = getContext().getTargetInfo().getTriple().isOSWindows();
-  einfo = einfo.withCallingConv(getCallingConventionForDecl(MD, IsWindows));
+  bool IsDarwin = getContext().getTargetInfo().getTriple().isOSDarwin();
+  einfo = einfo.withCallingConv(
+      getCallingConventionForDecl(MD, IsWindows, IsDarwin));
 
   if (getContext().getLangOpts().ObjCAutoRefCount &&
       MD->hasAttr<NSReturnsRetainedAttr>())
@@ -3896,8 +3902,9 @@ void CodeGenFunction::EmitCallArgs(
     const auto *MD = Prototype.P.dyn_cast<const ObjCMethodDecl *>();
     if (MD) {
       IsVariadic = MD->isVariadic();
-      ExplicitCC = getCallingConventionForDecl(
-          MD, CGM.getTarget().getTriple().isOSWindows());
+      llvm::Triple Triple = CGM.getTarget().getTriple();
+      ExplicitCC = getCallingConventionForDecl(MD, Triple.isOSWindows(),
+                                               Triple.isOSDarwin());
       ArgTypes.assign(MD->param_type_begin() + ParamsToSkip,
                       MD->param_type_end());
     } else {

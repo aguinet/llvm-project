@@ -2072,6 +2072,7 @@ void LLParser::parseOptionalDLLStorageClass(unsigned &Res) {
 ///   ::= 'spir_kernel'
 ///   ::= 'x86_64_sysvcc'
 ///   ::= 'win64cc'
+///   ::= 'aarch64_darwincc'
 ///   ::= 'webkit_jscc'
 ///   ::= 'anyregcc'
 ///   ::= 'preserve_mostcc'
@@ -2108,10 +2109,9 @@ bool LLParser::parseOptionalCallingConv(unsigned &CC) {
   case lltok::kw_arm_apcscc:     CC = CallingConv::ARM_APCS; break;
   case lltok::kw_arm_aapcscc:    CC = CallingConv::ARM_AAPCS; break;
   case lltok::kw_arm_aapcs_vfpcc:CC = CallingConv::ARM_AAPCS_VFP; break;
+  case lltok::kw_aarch64_darwincc:CC = CallingConv::AArch64Darwin; break;
   case lltok::kw_aarch64_vector_pcs:CC = CallingConv::AArch64_VectorCall; break;
-  case lltok::kw_aarch64_sve_vector_pcs:
-    CC = CallingConv::AArch64_SVE_VectorCall;
-    break;
+  case lltok::kw_aarch64_sve_vector_pcs:CC = CallingConv::AArch64_SVE_VectorCall; break;
   case lltok::kw_msp430_intrcc:  CC = CallingConv::MSP430_INTR; break;
   case lltok::kw_avr_intrcc:     CC = CallingConv::AVR_INTR; break;
   case lltok::kw_avr_signalcc:   CC = CallingConv::AVR_SIGNAL; break;

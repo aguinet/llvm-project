@@ -375,9 +375,7 @@ static void PrintCallingConv(unsigned cc, raw_ostream &Out) {
   case CallingConv::ARM_AAPCS:     Out << "arm_aapcscc"; break;
   case CallingConv::ARM_AAPCS_VFP: Out << "arm_aapcs_vfpcc"; break;
   case CallingConv::AArch64_VectorCall: Out << "aarch64_vector_pcs"; break;
-  case CallingConv::AArch64_SVE_VectorCall:
-    Out << "aarch64_sve_vector_pcs";
-    break;
+  case CallingConv::AArch64_SVE_VectorCall: Out << "aarch64_sve_vector_pcs"; break;
   case CallingConv::MSP430_INTR:   Out << "msp430_intrcc"; break;
   case CallingConv::AVR_INTR:      Out << "avr_intrcc "; break;
   case CallingConv::AVR_SIGNAL:    Out << "avr_signalcc "; break;
@@ -385,6 +383,7 @@ static void PrintCallingConv(unsigned cc, raw_ostream &Out) {
   case CallingConv::PTX_Device:    Out << "ptx_device"; break;
   case CallingConv::X86_64_SysV:   Out << "x86_64_sysvcc"; break;
   case CallingConv::Win64:         Out << "win64cc"; break;
+  case CallingConv::AArch64Darwin: Out << "aarch64_darwincc"; break;
   case CallingConv::SPIR_FUNC:     Out << "spir_func"; break;
   case CallingConv::SPIR_KERNEL:   Out << "spir_kernel"; break;
   case CallingConv::Swift:         Out << "swiftcc"; break;

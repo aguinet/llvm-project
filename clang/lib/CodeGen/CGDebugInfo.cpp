@@ -1237,6 +1237,8 @@ static unsigned getDwarfCC(CallingConv CC) {
     return llvm::dwarf::DW_CC_BORLAND_pascal;
   case CC_Win64:
     return llvm::dwarf::DW_CC_LLVM_Win64;
+  case CC_AArch64Darwin:
+    return llvm::dwarf::DW_CC_LLVM_AArch64Darwin;
   case CC_X86_64SysV:
     return llvm::dwarf::DW_CC_LLVM_X86_64SysV;
   case CC_AAPCS:

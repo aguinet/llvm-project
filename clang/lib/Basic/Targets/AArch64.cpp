@@ -534,6 +534,7 @@ AArch64TargetInfo::checkCallingConvention(CallingConv CC) const {
   case CC_PreserveAll:
   case CC_OpenCLKernel:
   case CC_AArch64VectorCall:
+  case CC_AArch64Darwin:
   case CC_Win64:
     return CCCR_OK;
   default:
@@ -805,6 +806,7 @@ WindowsARM64TargetInfo::checkCallingConvention(CallingConv CC) const {
   case CC_Swift:
   case CC_Win64:
     return CCCR_OK;
+  case CC_AArch64Darwin:
   default:
     return CCCR_Warning;
   }

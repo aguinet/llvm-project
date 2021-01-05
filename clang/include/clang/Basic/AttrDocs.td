@@ -2321,6 +2321,40 @@ attribute has no effect on Windows targets or non-x86_64 targets.
   }];
 }
 
+def DarwinABIDocs : Documentation {
+  let Category = DocCatCallingConvs;
+  let Content = [{
+On Linux ARM64 targets, this attribute changes the calling convention of
+a function to match the default convention used on Apple ARM64. This
+attribute has no effect on Apple targets or non-Linux ARM64 targets.
+
+The differences against the original ARM64 calling convention are `described by
+Apple <https://developer.apple.com/documentation/xcode/writing_arm64_code_for_apple_platforms>`_.
+
+Here is the list of what this attribute supports, quoting from the
+aforementioned document:
+
+* targeting the Darwin AAPCS ABI for C functions, especially those with
+  variadic arguments. This means everything in section "Pass Arguments to
+  Functions Correctly" and "Update Code that Passes Arguments to Variadic
+  Functions",
+
+* "The ABI requires the complete object (C1) and base-object (C2) constructors
+  to return this to their callers. Similarly, the complete object (D1) and
+  base-object (D2) destructors return this. This behavior matches the ARM
+  32-bit C++ ABI",
+
+* "When passing parameters to a function, Apple platforms ignore empty
+  structures unless those structures have a nontrivial destructor or copy
+  constructor. When passing such nontrivial structures, treat them as
+  aggregates with one byte member in the generic manner",
+
+* properly forwarding variadic arguments from a "darwin_abi function" to a
+  linux one using va_list.
+
+  }];
+}
+
 def StdCallDocs : Documentation {
   let Category = DocCatCallingConvs;
   let Content = [{
